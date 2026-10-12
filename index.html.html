@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>朝陽科大 VR 校園導覽</title>
+    <!-- 引入 Pannellum VR 套件 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css"/>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: "Microsoft JhengHei", sans-serif;
+        }
+        #panorama {
+            width: 100%;
+            height: 100%;
+        }
+        /* 標題列 */
+        #title-bar {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            z-index: 1000;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        /* 景點下方資訊卡片樣式 */
+        #info-card {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 380px;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        #info-card h3 {
+            margin: 0 0 8px 0;
+            font-size: 18px;
+            color: #4da6ff;
+        }
+        #info-card p {
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        /* 右下角快速導覽按鈕選單 */
+        #menu-bar {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .scene-btn {
+            padding: 8px 12px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            text-align: left;
+            transition: 0.2s;
+        }
+        .scene-btn:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="title-bar">🏫 朝陽科技大學 VR 互動導覽</div>
+    
+    <!-- 360 全景 / 實景容器 -->
+    <div id="panorama"></div>
+
+    <!-- 下方即時顯示的景點介紹文字 -->
+    <div id="info-card">
+        <h3 id="scene-title">載入中...</h3>
+        <p id="scene-desc">正在讀取景點介紹與多媒體資訊...</p>
+    </div>
+
+    <!-- 右下角快速切換場景按鈕 -->
+    <div id="menu-bar">
+        <b style="color: #333; font-size: 14px; margin-bottom: 2px;">📍 校園景點快速導覽</b>
+        <button class="scene-btn" onclick="changeScene('admin')">🏛️ 行政大樓</button>
+        <button class="scene-btn" onclick="changeScene('library')">📚 資訊圖書館</button>
+        <button class="scene-btn" onclick="changeScene('airplan')">✈️ 時選航空大樓</button>
+        <button class="scene-btn" onclick="changeScene('playground')">⚽ 綜合大運動場</button>
+        <button class="scene-btn" onclick="changeScene('dormitory')">🛏️ 學生宿舍環境</button>
+    </div>
+
+    <!-- 引入 Pannellum JS -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+    <script>
+        // 各場景的詳細介紹文字與資訊
+        const sceneData = {
+            "admin": {
+                "title": "行政大樓",
+                "desc": "朝陽科大的行政核心與地標建築。歐風典雅的鐘樓造型與紅磚廣場相輝映，辦理各項教務、學務與行政業務的主要場所。"
+            },
+            "library": {
+                "title": "波錠紀念圖書館",
+                "desc": "藏書豐富的智慧型圖書館，提供舒適的閱讀自修空間、多媒體視聽室以及各類學術資源，是學生課業研討的最佳去處。"
+            },
+            "airplan": {
+                "title": "時選航空大樓（飛機修護實作停機庫）",
+                "desc": "全台少見擁有真實客機機鼻與航空實作設備的特色大樓，結合 RICH 創業基地，培育頂尖航空與工程技術人才。"
+            },
+            "playground": {
+                "title": "綜合大運動場",
+                "desc": "包含標準紅土跑道、大型草皮足球場及周邊戶外球場，提供全校師生強身健體、舉辦運動會及課外社團活動的重要場域。"
+            },
+            "dormitory": {
+                "title": "學生宿舍大樓",
+                "desc": "內部設施完善的學生宿舍，採用上床下桌設計，提供舒適、安全且生活機能便利的住宿環境，營造溫馨的住宿生活圈。"
+            }
+        };
+
+        // 初始化 VR 全景檢視器
+        let viewer = pannellum.viewer('panorama', {
+            "default": {
+                "firstScene": "admin",
+                "author": "朝陽科大導覽團隊",
+                "sceneFadeDuration": 1000,
+                "autoLoad": true
+            },
+            "scenes": {
+                "admin": {
+                    "title": "行政大樓",
+                    "hfov": 110,
+                    "type": "equirectangular",
+                    "panorama": "administration.jpg"
+                },
+                "library": {
+                    "title": "圖書館",
+                    "hfov": 110,
+                    "type": "equirectangular",
+                    "panorama": "library.jpg"
+                },
+                "airplan": {
+                    "title": "航空大樓",
+                    "hfov": 110,
+                    "type": "equirectangular",
+                    "panorama": "airplan.jpg"
+                },
+                "playground": {
+                    "title": "運動場",
+                    "hfov": 110,
+                    "type": "equirectangular",
+                    "panorama": "playground.jpg"
+                },
+                "dormitory": {
+                    "title": "宿舍",
+                    "hfov": 110,
+                    "type": "equirectangular",
+                    "panorama": "dormitory.jpg"
+                }
+            }
+        });
+
+        // 切換場景並同步更新下方介紹文字的函式
+        function changeScene(sceneId) {
+            viewer.loadScene(sceneId);
+            updateInfoCard(sceneId);
+        }
+
+        // 更新下方卡片文字
+        function updateInfoCard(sceneId) {
+            if (sceneData[sceneId]) {
+                document.getElementById('scene-title').innerText = sceneData[sceneId].title;
+                document.getElementById('scene-desc').innerText = sceneData[sceneId].desc;
+            }
+        }
+
+        // 當場景載入完成時，自動更新文字
+        viewer.on('scenechange', function(sceneId) {
+            updateInfoCard(sceneId);
+        });
+
+        // 頁面初次載入預設顯示行政大樓介紹
+        window.onload = function() {
+            updateInfoCard('admin');
+        };
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>朝陽科技大學 VR 校園導覽</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+            font-family: "Microsoft JhengHei", sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        header {
+            background-color: #1a73e8;
+            color: white;
+            width: 100%;
+            padding: 20px 0;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .main-layout {
+            display: flex;
+            max-width: 1200px;
+            width: 95%;
+            gap: 20px;
+            margin: 20px auto;
+        }
+        /* 左側：互動校園地圖區 */
+        .map-section {
+            flex: 1;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .map-section h3 {
+            margin-top: 0;
+            color: #1a73e8;
+        }
+        .map-container {
+            position: relative;
+            display: inline-block;
+            max-width: 100%;
+        }
+        .map-container img {
+            width: 100%;
+            max-height: 450px;
+            border-radius: 8px;
+            object-fit: contain;
+        }
+        /* 地圖上的互動標記按鈕 */
+        .map-marker {
+            position: absolute;
+            background: #ff4757;
+            color: white;
+            border: 2px solid white;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            text-align: center;
+            line-height: 24px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            transform: translate(-50%, -50%);
+            transition: 0.2s;
+        }
+        .map-marker:hover {
+            background: #ff6b81;
+            transform: translate(-50%, -50%) scale(1.2);
+        }
+
+        /* 右側：景點照片與介紹區 */
+        .viewer-section {
+            flex: 1.2;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .image-box {
+            background: #000;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 280px;
+            overflow: hidden;
+        }
+        .image-box img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .info-box h2 {
+            margin: 15px 0 8px 0;
+            color: #1a73e8;
+            font-size: 20px;
+        }
+        .info-box p {
+            color: #555;
+            line-height: 1.5;
+            font-size: 14px;
+            margin: 0;
+        }
+        /* 導覽切換按鈕 */
+        .nav-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+        }
+        .nav-btn {
+            padding: 10px;
+            background-color: #f8f9fa;
+            color: #333;
+            border: 1px solid #dadce0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .nav-btn:hover {
+            background-color: #e8f0fe;
+            border-color: #1a73e8;
+            color: #1a73e8;
+        }
+        .nav-btn.active {
+            background-color: #1a73e8;
+            color: white;
+            border-color: #1a73e8;
+        }
+    </style>
+</head>
+<body>
+
+    <header>🏫 朝陽科技大學 互動校園導覽系統</header>
+
+    <div class="main-layout">
+        <!-- 左側：校園地圖與互動熱點 -->
+        <div class="map-section">
+            <h3>📍 校園配置圖（點擊圖標互動）</h3>
+            <div class="map-container">
+                <img src="map.jpg" alt="校園地圖" id="campus-map">
+                <!-- 各景點在地圖上的座標位置百分比 (可根據地圖微調 style 的 top 和 left) -->
+                <button class="map-marker" style="top: 55%; left: 62%;" onclick="switchSpot('admin')" title="行政大樓">1</button>
+                <button class="map-marker" style="top: 32%; left: 83%;" onclick="switchSpot('library')" title="圖書館">2</button>
+                <button class="map-marker" style="top: 15%; left: 52%;" onclick="switchSpot('airplan')" title="航空大樓">3</button>
+                <button class="map-marker" style="top: 32%; left: 32%;" onclick="switchSpot('playground')" title="運動場">4</button>
+                <button class="map-marker" style="top: 12%; left: 62%;" onclick="switchSpot('dormitory')" title="宿舍">5</button>
+            </div>
+            <p style="font-size: 12px; color: #777; margin-top: 10px;">提示：點擊地圖上的數字編號或右側按鈕可切換景點</p>
+        </div>
+
+        <!-- 右側：照片展示與文字介紹 -->
+        <div class="viewer-section">
+            <div>
+                <div class="image-box">
+                    <img id="spot-img" src="" alt="景點實景照片">
+                </div>
+                <div class="info-box">
+                    <h2 id="spot-title">載入中...</h2>
+                    <p id="spot-desc">正在載入景點資訊...</p>
+                </div>
+            </div>
+
+            <div class="nav-buttons">
+                <button class="nav-btn active" onclick="switchSpot('admin')">🏛️ 1. 行政大樓</button>
+                <button class="nav-btn" onclick="switchSpot('library')">📚 2. 資訊圖書館</button>
+                <button class="nav-btn" onclick="switchSpot('airplan')">✈️ 3. 航空大樓</button>
+                <button class="nav-btn" onclick="switchSpot('playground')">⚽ 4. 綜合運動場</button>
+                <button class="nav-btn" onclick="switchSpot('dormitory')" style="grid-column: span 2;">🛏️ 5. 學生宿舍環境</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 景點資料庫
+        const spots = {
+            "admin": {
+                "title": "1. 行政大樓",
+                "desc": "朝陽科大的行政核心與地標建築。歐風典雅的鐘樓造型與紅磚廣場相輝映，辦理各項教務、學務與行政業務的主要場所。",
+                "img": "administration.jpg"
+            },
+            "library": {
+                "title": "2. 波錠紀念圖書館",
+                "desc": "藏書豐富的智慧型圖書館，提供舒適的閱讀自修空間、多媒體視聽室以及各類學術資源，是學生課業研討的最佳去處。",
+                "img": "library.jpg"
+            },
+            "airplan": {
+                "title": "3. 時選航空大樓（飛機修護實作停機庫）",
+                "desc": "全台少見擁有真實客機機鼻與航空實作設備的特色大樓，結合 RICH 創業基地，培育頂尖航空與工程技術人才。",
+                "img": "airplan.jpg"
+            },
+            "playground": {
+                "title": "4. 綜合大運動場",
+                "desc": "包含標準紅土跑道、大型草皮足球場及周邊戶外球場，提供全校師生強身健體、舉辦運動會及課外社團活動的重要場域。",
+                "img": "playground.jpg"
+            },
+            "dormitory": {
+                "title": "5. 學生宿舍大樓",
+                "desc": "內部設施完善的學生宿舍，採用上床下桌設計，提供舒適、安全且生活機能便利的住宿環境，營造溫馨的住宿生活圈。",
+                "img": "dormitory.jpg"
+            }
+        };
+
+        // 切換景點函式
+        function switchSpot(spotKey) {
+            const data = spots[spotKey];
+            if (!data) return;
+
+            // 更新標題與介紹文字
+            document.getElementById('spot-title').innerText = data.title;
+            document.getElementById('spot-desc').innerText = data.desc;
+            
+            // 更新右側照片
+            const imgElement = document.getElementById('spot-img');
+            imgElement.src = data.img;
+            imgElement.onerror = function() {
+                this.src = "";
+                alert("找不到圖片檔案：" + data.img + "。\n請確認該圖片已正確上傳至 GitHub，且檔名與程式碼相符！");
+            };
+
+            // 更新按鈕高亮狀態
+            const buttons = document.querySelectorAll('.nav-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // 找出對應按鈕加上 active
+            buttons.forEach(btn => {
+                if(btn.getAttribute('onclick').includes(spotKey)) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        // 預設進入網頁時顯示行政大樓
+        window.onload = function() {
+            switchSpot('admin');
+        };
+    </script>
+
+</body>
+</html>
